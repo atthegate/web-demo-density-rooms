@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+	<meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Demo - Density - Map</title>
+	
+	<!-- Bootstrap Core CSS -->
+	<link href="css/bootstrap.min.css" rel="stylesheet">
+
+	<!-- Custom CSS -->
+	<link href="css/map.css" rel="stylesheet">
+		
+</head>
+
+<body>
+
+	<!-- Navigation -->
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">Map</a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav">
+                    <li>
+                        <a href="rooms.html" target="_blank">Rooms</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container -->
+    </nav>
+
+	<!-- MAP -->
+	<div class="container">
+		<div id="map"></div>
+	</div>
+	<!-- /MAP
+
+	<!-- JAVASCRIPT -->
+	
+	<!-- JQuery -->
+	<script src="js/jquery-3.1.1.min.js"></script>
+	
+	<!-- Bootstrap Core JavaScript -->
+    <script src="js/bootstrap.min.js"></script>
+	
+	<!-- Custom Javascript -->
+	<script src="js/demo-density.js"></script>
+	<script src="assets/data/room-specs.js"></script>
+	
+	<!-- Custom Page-Specific Javascript -->
+	<script>
+	
+		// Initialize Sensors	
+		function initSensors(){
+		
+			// GLOBAL VAR: state
+			
+			// On click...
+			$('#sensors').on('click', '> *', function(event) {
+	
+				// Check for shift key..
+				if(event.shiftKey){
+					// Exit
+					var direction = -1;
+				}else{
+					// Enter
+					var direction = 1;
+				}
+				
+				// Simulate Event
+				var sensor_id = state.sensors[event.target.id].id;
+				postSimulatedEventDIO(sensor_id, direction);
+				
+			});
+		}
+		
+		// Update Each Space
+		function updateSpaces(spaces){
+			$.each(spaces, function(idx, space){
+				updateSpaceStatus(space);
+			})
+		}
+		
+		// Update Space Status
+		function updateSpaceStatus(space){
+			
+			// GLOBAL VAR: state
+		
+			// Predefined SVG inline style
+			var style = 'fill:%s;fill-opacity:0.49803922;fill-rule:evenodd;stroke:#000000;stroke-width:0.80000001px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1';
+		
+			// SVG element ID of Space
+			var e_id = state.spaces[space.id].e_id;
+			
+			// Current Count of Space
+			var current_count = space.current_count;
+			
+			// Check if Space element ID is in list of room specifications...
+			if(isInArray(e_id, Object.keys(state.room_specs))){
+			
+				// Get Space status (current count v capacity)
+				var space_status = checkSpaceStatus(e_id, current_count)
+				
+				// SPACE_STATUS
+				// -1 : UNKNOWN
+				// 0 : FREE
+				// 1 : BUSY
+				// 2 : SHARED
+		
+				// Fill colors by Space status
+				var fill_by_space_status = {
+					'-1': '#c2c2a3',
+					'0': '#00ff00',
+					'1': '#ff0000',
+					'2': '#ff6600'
+				}
+				
+				// Get fill color by Space status
+				var fill_c = fill_by_space_status[String(space_status)]
+				
+			}else{ // Space does not have speech-rate
+			
+				// Check if Space is occupied or not...
+				if(current_count <= 0){
+					fill_c = '#00ff00' // FREE
+				}else{
+					fill_c = '#ff0000' // BUSY
+				}
+			}
+			
+			// Change inline style of SVG for Space element ID
+			$('#' + e_id).attr('style', style.replace('%s', fill_c));
+		
+		}
+		
+	</script>
+	
+	<!-- Initialization Javascript -->
+	<script>
+		
+		$(function() {
+			
+			$('#action').text('Loading floorplan...')
+			
+			// Load SVG map of floor plan...
+			$('#map').load("assets/floorplans/floorplan_ld.svg", function() {
+			
+				$('#action').text('');
+				
+				// Initialize Spaces
+				initSpaces();
+				
+				// Save room specs to global variable [state]
+				state.room_specs = room_specs;
+				
+				// Initialize sensors
+				initSensors();
+				
+				// Get Spaces status from Density.IO
+				getSpacesDIO();
+				
+			});
+			
+		})
+
+		// Check Density.IO Spaces every 5 secs...
+		setInterval(function(){ getSpacesDIO(updateSpaces);; }, 5000);
+		
+	</script>
+
+</body>
+
+</html>

@@ -1,0 +1,17 @@
+#map {
+  width: 100%;
+}
+
+#map svg {
+	width: 100%;
+}
+
+#status {
+  float: right;
+  width: 400px;
+  margin-right: -400px;
+}
+
+#cleared {
+  clear: both;
+}
